@@ -10,9 +10,8 @@ public extension UIImage { // (2)
         UIRectFill(rect)
         let image = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
-
-        guard let cgImage = image.CGImage else { return nil }
-        self.init(CGImage: cgImage)
+        guard let cgImage = image?.cgImage else { return nil }
+        self.init(cgImage: cgImage)
     }
 }
 
@@ -26,9 +25,9 @@ public class Card: UIImageView { // (4)
         self.x = x
         self.y = y
         super.init(image: image)
-        self.backgroundColor = .grayColor()
+        self.backgroundColor = .gray
         self.layer.cornerRadius = 10.0
-        self.userInteractionEnabled = true
+        self.isUserInteractionEnabled = true
     }
 
     required public init?(coder aDecoder: NSCoder) {
@@ -46,7 +45,7 @@ public class GameController: UIViewController {
     }
 
     public var backImage: UIImage = UIImage(
-        color: .redColor(),
+        color: .red,
         size: CGSize(width: cardWidth, height: cardHeight))!
 
     // (2): computed properties
@@ -72,7 +71,7 @@ public class GameController: UIViewController {
         shuffle()
         setupGrid()
         // uncomment later:
-        let tap = UITapGestureRecognizer(target: self, action: #selector(GameController.handleTap(_:)))
+        let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(gr:)))
         view.addGestureRecognizer(tap)
     }
 
@@ -82,7 +81,7 @@ public class GameController: UIViewController {
 
     public override func loadView() {
         view = UIView()
-        view.backgroundColor = .blueColor()
+        view.backgroundColor = .blue
         view.frame = CGRect(x: 0, y: 0, width: viewWidth, height: viewHeight)
     }
 
@@ -90,7 +89,7 @@ public class GameController: UIViewController {
     func shuffle() {
         let numbers = (1...8).flatMap{[$0, $0]}
         shuffledNumbers =
-            GKRandomSource.sharedRandom().arrayByShufflingObjectsInArray(numbers) as! [Int]
+            GKRandomSource.sharedRandom().arrayByShufflingObjects(in: numbers) as! [Int]
 
     }
 
@@ -114,10 +113,10 @@ public class GameController: UIViewController {
     func setupGrid() {
         for i in 0..<4 {
             for j in 0..<4 {
-                let n = cardNumberAt(i, j)
+                let n = cardNumberAt(x:i, j)
                 let card = Card(image: UIImage(named: String(n)), x: i, y: j)
                 card.tag = n
-                card.center = centerOfCardAt(i, j)
+                card.center = centerOfCardAt(x:i, j)
                 view.addSubview(card)
             }
         }
@@ -128,19 +127,19 @@ public class GameController: UIViewController {
         view.frame = CGRect(x: 0, y: 0, width: viewWidth, height: viewHeight)
         for v in view.subviews {
             if let card = v as? Card {
-                card.center = centerOfCardAt(card.x, card.y)
+                card.center = centerOfCardAt(x: card.x, card.y)
             }
         }
         
     }
     
-    override public func viewDidAppear(animated: Bool) {
+    override public func viewDidAppear(_ animated: Bool) {
         for v in view.subviews {
             if let card = v as? Card {     // (8): failable casting
-                UIView.transitionWithView(
-                    card,
+                UIView.transition(
+                    with: card,
                     duration: 1.0,
-                    options: .TransitionFlipFromLeft,
+                    options: .transitionFlipFromLeft,
                     animations: {
                         card.image =  self.backImage
                     }, completion: nil)
@@ -149,37 +148,37 @@ public class GameController: UIViewController {
     }
 
     func handleTap(gr: UITapGestureRecognizer) {
-        let v = view.hitTest(gr.locationInView(view), withEvent: nil)!
+        let v = view.hitTest(gr.location(in: view), with: nil)!
         if let card = v as? Card {
-            UIView.transitionWithView(
-                card, duration: 0.5,
-                options: .TransitionFlipFromLeft,
+            UIView.transition(
+                with: card, duration: 0.5,
+                options: .transitionFlipFromLeft,
                 animations: {card.image = UIImage(named: String(card.tag))}) { // trailing completion handler:
                     _ in
-                    card.userInteractionEnabled = false
+                    card.isUserInteractionEnabled = false
                     if let pCard = self.firstCard {
                         if pCard.tag == card.tag {
-                            UIView.animateWithDuration(
-                                0.5,
+                            UIView.animate(
+                                withDuration: 0.5,
                                 animations: {card.alpha = 0.0},
                                 completion: {_ in card.removeFromSuperview()})
-                            UIView.animateWithDuration(
-                                0.5,
+                            UIView.animate(
+                                withDuration: 0.5,
                                 animations: {pCard.alpha = 0.0},
                                 completion: {_ in pCard.removeFromSuperview()})
                         } else {
-                            UIView.transitionWithView(
-                                card,
+                            UIView.transition(
+                                with: card,
                                 duration: 0.5,
-                                options: .TransitionFlipFromLeft,
+                                options: .transitionFlipFromLeft,
                                 animations: {card.image = self.backImage})
-                            { _ in card.userInteractionEnabled = true }
-                            UIView.transitionWithView(
-                                pCard,
+                            { _ in card.isUserInteractionEnabled = true }
+                            UIView.transition(
+                                with: pCard,
                                 duration: 0.5,
-                                options: .TransitionFlipFromLeft,
+                                options: .transitionFlipFromLeft,
                                 animations: {pCard.image = self.backImage})
-                            { _ in pCard.userInteractionEnabled = true }
+                            { _ in pCard.isUserInteractionEnabled = true }
                         }
                         self.firstCard = nil
                     } else {
@@ -192,12 +191,12 @@ public class GameController: UIViewController {
     public func quickPeek() {
         for v in view.subviews {
             if let card = v as? Card {
-                card.userInteractionEnabled = false
-                UIView.transitionWithView(card, duration: 1.0, options: .TransitionFlipFromLeft, animations: {card.image =  UIImage(named: String(card.tag))}) {
+                card.isUserInteractionEnabled = false
+                UIView.transition(with: card, duration: 1.0, options: .transitionFlipFromLeft, animations: {card.image =  UIImage(named: String(card.tag))}) {
                     _ in
-                    UIView.transitionWithView(card, duration: 1.0, options: .TransitionFlipFromLeft, animations: {card.image =  self.backImage}) {
+                    UIView.transition(with: card, duration: 1.0, options: .transitionFlipFromLeft, animations: {card.image =  self.backImage}) {
                         _ in
-                        card.userInteractionEnabled = true
+                        card.isUserInteractionEnabled = true
                     }
 
                 }
