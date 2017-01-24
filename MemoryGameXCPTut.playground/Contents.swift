@@ -1,16 +1,17 @@
 import XCPlayground
 import UIKit
+import PlaygroundSupport
 
 let gc = GameController()
-XCPlaygroundPage.currentPage.liveView = gc
+PlaygroundPage.current.liveView = gc
 
 gc.backImage = UIImage(named: "b")!
-//gc.padding = 75
+// gc.padding = 75
 
 class LPGR {
     static var counter = 0
     @objc static func longPressed(lp: UILongPressGestureRecognizer) {
-        if lp.state == .Began {
+        if lp.state == .began {
             gc.quickPeek()
             counter += 1
             print("You peeked \(counter) time(s).")
